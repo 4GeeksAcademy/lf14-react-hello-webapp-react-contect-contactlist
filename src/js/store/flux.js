@@ -1,4 +1,7 @@
 const getState = ({ getStore, getActions, setStore }) => { 
+    let lastFetchTime = null;
+    const cacheDuration = 300000; //Catching, limita llamadas inecesarias cada 5 mins
+
     return {
         store: {
             listContacts: [] 
@@ -17,6 +20,12 @@ const getState = ({ getStore, getActions, setStore }) => {
             },
 
             getInfoContacts: async () => {
+                const now = new Date().getTime();//Tiempo en milisegundos
+                if (lastFetchTime && (now - lastFetchTime < cacheDuration)) {//Condición relacionada al catching
+                    console.log("Using cached data. No API call made.");//Para revisar el 429
+                    return;
+                }
+
                 try {
                     const response = await fetch("https://playground.4geeks.com/contact/agendas/lf14/contacts", {
                         method: "GET"
@@ -26,6 +35,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     } else if (response.ok) {
                         const data = await response.json();
                         setStore({ listContacts: data.contacts });
+                        lastFetchTime = now;
                     }
                 } catch (error) {
                     console.log(error);
@@ -54,41 +64,44 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.log(error);
                 }
             },
-         deleteContact: async (id) => {
-    try {
-        const response = await fetch(`https://playground.4geeks.com/contact/agendas/lf14/contacts/${id}`, {
-            method: "DELETE",
-        });
-        if (response.ok) {
-            const store = getStore();
-            const updatedContacts = store.listContacts.filter(contact => contact.id !== id);
-            setStore({ listContacts: updatedContacts });
-            console.log(`Contact with ID ${id} deleted`);
-        } else {
-            console.log("Error deleting contact");
-        }
-    } catch (error) {
-        console.log(error);
-    }
-},
-
-editContact: async (id, contact) => {
-    try {
-        const response = await fetch(`https://playground.4geeks.com/contact/agendas/lf14/contacts/${id}`, {
-            method: "PUT",
-            headers: {
-                'Content-Type': 'application/json'
+            deleteContact: async (id) => {
+                try {
+                    const response = await fetch(`https://playground.4geeks.com/contact/agendas/lf14/contacts/${id}`, {
+                        method: "DELETE",
+                    });
+                    if (response.ok) {
+                        const store = getStore();
+                        const updatedContacts = store.listContacts.filter(contact => contact.id !== id);
+                        setStore({ listContacts: updatedContacts });
+                        console.log(`Contact with ID ${id} deleted`);
+                    } else {
+                        console.log("Error deleting contact");
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
             },
-            body: JSON.stringify(contact)
-        });
-        const data = await response.json();
-        if (response.ok) {
-            const store = getStore();
-            const updatedList = store.listContacts.map(item => (item.id == id ? data : item));
-            setStore({ listContacts: updatedList });
-        } 
-    } catch (error) {
-        console.log(error);
-    }
-}
+
+            editContact: async (id, contact) => {
+                try {
+                    const response = await fetch(`https://playground.4geeks.com/contact/agendas/lf14/contacts/${id}`, {
+                        method: "PUT",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(contact)
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        const store = getStore();
+                        const updatedList = store.listContacts.map(item => (item.id == id ? data : item));
+                        setStore({ listContacts: updatedList });
+                    } 
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        }
+    };
+};
 export default getState;
