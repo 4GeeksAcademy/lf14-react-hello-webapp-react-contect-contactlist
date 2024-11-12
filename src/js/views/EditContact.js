@@ -1,40 +1,59 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Context } from "../store/appContext.js";
 
 const EditContact = () => {
-    const { store, actions } = useContext(Context)
+    const { store, actions } = useContext(Context);
+    const { id } = useParams();
     let navigate = useNavigate();
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+
+    useEffect(() => {
+        if (id && store.listContacts.length > 0) {
+            const currentContact = store.listContacts.find(contact => contact.id == id);
+            setName(currentContact.name);
+            setPhone(currentContact.phone);
+            setEmail(currentContact.email);
+            setAddress(currentContact.address);
+        }
+    }, [id, store.listContacts]);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const payload = { name, email, phone, address };
+        actions.editContact(id, payload);
+        alert("Contact edited");
+        navigate("/");
+    };
 
     return (
-
         <div className="container">
             <h1 className="text-center">Update Contact</h1>
-
-            <form className="container">
+            <form className="container" onSubmit={handleSubmit}>
                 <div className="mb-3">
-                    <label for="formGroupExampleInput1" className="form-label">Full Name</label>
-                    <input type="text" className="form-control" id="formGroupExampleInput1" placeholder="Full name" onChange={(e) => setName(e.target.value)} value={name} />
+                    <label className="form-label">Full Name</label>
+                    <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <div className="mb-3">
-                    <label for="formGroupExampleInput2" className="form-label">Email</label>
-                    <input type="text" className="form-control" id="formGroupExampleInput2" placeholder="Enter email" onChange={(e) => setEmail(e.target.value)} value={email} />
+                    <label className="form-label">Email</label>
+                    <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="mb-3">
-                    <label for="formGroupExampleInput3" className="form-label">Phone</label>
-                    <input type="text" className="form-control" id="formGroupExampleInput3" placeholder="Enter phone" onChange={(e) => setPhone(e.target.value)} value={phone} />
+                    <label className="form-label">Phone</label>
+                    <input type="text" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
                 <div className="mb-3">
-                    <label for="formGroupExampleInput4" className="form-label">Address</label>
-                    <input type="text" className="form-control" id="formGroupExampleInput4" placeholder="Enter address" onChange={(e) => setAddress(e.target.value)} value={address} />
+                    <label className="form-label">Address</label>
+                    <input type="text" className="form-control" value={address} onChange={(e) => setAddress(e.target.value)} />
                 </div>
-                <div className="mb-3">
-                    <button type="button" className="btn btn-primary">Update Contact</button>
-                </div>
+                <button type="submit" className="btn btn-primary">Update Contact</button>
             </form>
-
-            <Link to="/"><a>Back to Contacts</a></Link>
+            <Link to="/">Back to Contacts</Link>
         </div>
-    )
-}
+    );
+};
+
 export default EditContact;
